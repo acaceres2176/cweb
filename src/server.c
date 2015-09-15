@@ -5,16 +5,33 @@
 int parse(char* request, int len)
 {
   int type_flags[4] = {0, 0, 0, 0}; // GET, POST, PUT, DELETE
-  char typestr[4] = {request[0], request[1], request[2], '\0'};
+  char typestr[6] = {request[0], request[1], request[2], request[3], request[4], request[5]};
   
   // categorise request
-  if(strcmp("GET\0", typestr) == 0)
+  if(strcmp("GET", typestr) < 0)
   {
-    type_flags[0] = 1;
+    type_flags[0] = 1; // GET
+  }
+  else if(strcmp("POST", typestr) < 0)
+  {
+    type_flags[1] = 1; // POST
+  }
+  else if(strcmp("PUT", typestr) < 0)
+  {
+    type_flags[2] = 1; // PUT
+  }
+  else if(strcmp("DELETE", typestr) < 0)
+  {
+    type_flags[3] = 1; // DELETE
   }
   else
   {
     return EXIT_FAILURE; // malformed
+  }
+  
+  if(type_flags[0] == 1)
+  {
+    
   }
   
   return EXIT_SUCCESS;

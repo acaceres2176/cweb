@@ -16,6 +16,7 @@
 #define DEFAULT_PORT "80"
 #define DEFAULT_BUF_LEN 512
 #define DEFAULT_RESPONSE "HTTP/1.1 200 OK\nConnection: close\n\n<html><head><title>Hello, world!</title></head><body><p>Hello, world!</p></body></html>\n\n"
+#define DEFAULT_BACKLOG 16
 
 int main(void)
 {
@@ -76,7 +77,17 @@ int main(void)
     return EXIT_FAILURE;
   }
   
-  status = listen(sock, 1);
+  printf("Waiting for requests over the wire...\n");
+  log_msg("Waiting...");
+  
+  char* recvbuf = malloc(DEFAULT_BUF_LEN * sizeof(char));
+  char* response = malloc(DEFAULT_BUF_LEN * sizeof(char));
+  
+  int alive = 1;
+  
+  while(alive == 1)
+  {
+    status = listen(sock, DEFAULT_BACKLOG);
   
   // error handling
   if(status == -1)
@@ -90,20 +101,10 @@ int main(void)
     
     return EXIT_FAILURE;
   }
-  
-  printf("Waiting for requests over the wire...\n");
-  log_msg("Waiting...");
-  
-  addr_size = sizeof their_addr;
-  new_sock = accept(sock, (struct sockaddr *)&their_addr, &addr_size);
-  
-  char* recvbuf = malloc(DEFAULT_BUF_LEN * sizeof(char));
-  char* response = malloc(DEFAULT_BUF_LEN * sizeof(char));
-  
-  int alive = 1;
-  
-  while(alive == 1)
-  {
+    
+    addr_size = sizeof their_addr;
+    new_sock = accept(sock, (struct sockaddr *)&their_addr, &addr_size);
+    
     status = recv(new_sock, recvbuf, DEFAULT_BUF_LEN, 0);
   
     if(status == -1)
@@ -139,6 +140,7 @@ int main(void)
     }
     
     send(new_sock, response, DEFAULT_BUF_LEN, 0);
+    close(new_sock);
   }
   
   free(errmsg);
