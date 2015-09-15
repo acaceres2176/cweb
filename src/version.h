@@ -1,0 +1,8 @@
+#ifndef VERSION_H_
+#define VERSION_H_
+
+#define CWEB_MAJOR_VERSION_NUM 0
+#define CWEB_MINOR_VERSION_NUM 1
+#define CWEB_VERSION "0.1"
+
+#endif // VERSION_H_

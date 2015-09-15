@@ -10,6 +10,9 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
+#include "server.h"
+#include "logging.h"
+
 #define DEFAULT_PORT "80"
 #define DEFAULT_BUF_LEN 512
 #define DEFAULT_RESPONSE "HTTP/1.1 200 OK\nConnection: close\n\n<html><head><title>Hello, world!</title></head><body><p>Hello, world!</p></body></html>\n\n"
@@ -20,6 +23,8 @@ int main(void)
   int sock, new_sock = 0;
   struct addrinfo hints;
   struct addrinfo *servinfo;
+  
+  char* errmsg = malloc(512 * sizeof(char));
   
   struct sockaddr_storage their_addr;
   socklen_t addr_size;
@@ -33,8 +38,10 @@ int main(void)
   
   if(status != 0) 
   {
-    fprintf(stderr, "[ERROR] Failed to obtain address information: %s\n", gai_strerror(status));
-   
+    sprintf(errmsg, "[ERROR] Failed to receive on socket. System said: %s\n", strerror(errno));
+    fprintf(stderr, errmsg);
+    log_msg(errmsg);
+      
     return EXIT_FAILURE;
   }
   // servinfo now points to a linked list of 1 or more struct addrinfos
@@ -44,7 +51,9 @@ int main(void)
   
   if(sock == -1)
   {
-    fprintf(stderr, "[ERROR] Failed to obtain socket. System said: %s\n", strerror(errno));
+    sprintf(errmsg, "[ERROR] Failed to receive on socket. System said: %s\n", strerror(errno));
+    fprintf(stderr, errmsg);
+    log_msg(errmsg);
     
     close(sock);
     freeaddrinfo(servinfo);
@@ -57,8 +66,10 @@ int main(void)
   // error handling
   if(status == -1)
   {
-    fprintf(stderr, "[ERROR] Failed to bind socket. System said: %s\n", strerror(errno));
-    
+    sprintf(errmsg, "[ERROR] Failed to receive on socket. System said: %s\n", strerror(errno));
+    fprintf(stderr, errmsg);
+    log_msg(errmsg);
+      
     close(sock);
     freeaddrinfo(servinfo);
         
@@ -70,8 +81,10 @@ int main(void)
   // error handling
   if(status == -1)
   {
-    fprintf(stderr, "[ERROR] Failed to listen on socket. System said: %s\n", strerror(errno));
-  
+    sprintf(errmsg, "[ERROR] Failed to receive on socket. System said: %s\n", strerror(errno));
+    fprintf(stderr, errmsg);
+    log_msg(errmsg);
+      
     close(sock);
     freeaddrinfo(servinfo);
     
@@ -79,30 +92,57 @@ int main(void)
   }
   
   printf("Waiting for requests over the wire...\n");
+  log_msg("Waiting...");
   
   addr_size = sizeof their_addr;
   new_sock = accept(sock, (struct sockaddr *)&their_addr, &addr_size);
   
   char* recvbuf = malloc(DEFAULT_BUF_LEN * sizeof(char));
+  char* response = malloc(DEFAULT_BUF_LEN * sizeof(char));
   
-  status = recv(new_sock, recvbuf, DEFAULT_BUF_LEN, 0);
+  int alive = 1;
   
-  if(status == -1)
+  while(alive == 1)
   {
-    fprintf(stderr, "[ERROR] Failed to receive on socket. System said: %s\n", strerror(errno));
+    status = recv(new_sock, recvbuf, DEFAULT_BUF_LEN, 0);
+  
+    if(status == -1)
+    {
+      sprintf(errmsg, "[ERROR] Failed to receive on socket. System said: %s\n", strerror(errno));
+      fprintf(stderr, errmsg);
+      log_msg(errmsg);
+      
+      free(response);
+      free(recvbuf);
+      close(new_sock);
+      close(sock);
+      freeaddrinfo(servinfo);
     
-    free(recvbuf);
-    close(new_sock);
-    close(sock);
-    freeaddrinfo(servinfo);
+      return EXIT_FAILURE;
+    }
+  
+    printf("%s", recvbuf);
+  
+    status = parse(recvbuf, DEFAULT_BUF_LEN);
     
-    return EXIT_FAILURE;
+    if(status == EXIT_FAILURE)
+    {
+      // respond with HTTP 400
+      respond(400, recvbuf, response);
+      alive = 0;
+    }
+    else
+    {
+      respond(200, recvbuf, response);
+      //alive = 0;
+      //send(new_sock, DEFAULT_RESPONSE, strlen(DEFAULT_RESPONSE), 0);
+    }
+    
+    send(new_sock, response, DEFAULT_BUF_LEN, 0);
   }
   
-  printf("%s", recvbuf);
-  
-  send(new_sock, DEFAULT_RESPONSE, strlen(DEFAULT_RESPONSE), 0);
-  
+  free(errmsg);
+  free(response);
   free(recvbuf);
   close(new_sock);
   close(sock);
