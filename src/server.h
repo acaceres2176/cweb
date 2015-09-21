@@ -8,7 +8,14 @@
 #include "http.h"
 #include "version.h"
 
-int parse(char* request, int len);
-int respond(int code, char* request, char* response);
+#define DEFAULT_ROOT_DIR "/home/jmcph4/Development/cweb/bin/public_html"
+
+/*
+  Core server components go here (e.g. parsing and responding to HTTP requests,
+  etc.)
+*/
+
+int parse(char* request, int len, HTTP_Request_Header* http_header);
+int respond(HTTP_Request_Header* http_header, char* response);
 
 #endif // SERVER_H_

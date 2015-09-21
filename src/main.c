@@ -25,7 +25,13 @@ int main(void)
   struct addrinfo hints;
   struct addrinfo *servinfo;
   
-  char* errmsg = malloc(512 * sizeof(char));
+  HTTP_Request_Header http_header;
+  http_header.method = 0;
+  http_header.uri = "";
+  http_header.major_version = 0;
+  http_header.minor_version = 0;
+  
+  char* errmsg = malloc(DEFAULT_ERRMSG_LEN * sizeof(char));
   
   struct sockaddr_storage their_addr;
   socklen_t addr_size;
@@ -122,19 +128,19 @@ int main(void)
       return EXIT_FAILURE;
     }
   
-    printf("%s", recvbuf);
+    //printf("%s", recvbuf);
   
-    status = parse(recvbuf, DEFAULT_BUF_LEN);
+    status = parse(recvbuf, DEFAULT_BUF_LEN, &http_header);
     
     if(status == EXIT_FAILURE)
     {
       // respond with HTTP 400
-      respond(400, recvbuf, response);
+      //respond(&http_header, response);
       alive = 0;
     }
     else
     {
-      respond(200, recvbuf, response);
+      respond(&http_header, response);
       //alive = 0;
       //send(new_sock, DEFAULT_RESPONSE, strlen(DEFAULT_RESPONSE), 0);
     }
