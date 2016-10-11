@@ -5,59 +5,59 @@
 
 unsigned int hash(char* s)
 {
-  unsigned int hashval;
+    unsigned int hashval;
   
-  for(hashval=0;s!='\0';s++)
-  {
-    hashval = *s + 31 * hashval;
-  }
+    for(hashval=0;s!='\0';s++)
+    {
+        hashval = *s + 31 * hashval;
+    }
   
-  return hashval % HASHSIZE;
+    return hashval % HASHSIZE;
 }
 
 struct entry* lookup(char* s, struct entry* table)
 {
-  struct entry* np;
+    struct entry* np;
   
-  for(np=&table[hash(s)];np!=NULL;np=np->next)
-  {
-    if(strcmp(s, np->key) == 0)
+    for(np=&table[hash(s)];np!=NULL;np=np->next)
     {
-      return np;
+        if(strcmp(s, np->key) == 0)
+        {
+            return np;
+        }
     }
-  }
   
-  return NULL;
+    return NULL;
 }
 
 struct entry* insert(char* key, char* value, struct entry* table)
 {
-  struct entry* np;
-  unsigned int hashval;
+    struct entry* np;
+    unsigned int hashval;
   
-  if((np = lookup(key, table)) == NULL)
-  {
-    // not found
-    np = malloc(sizeof(np));
-    
-    if(np == NULL || (np->key = strdup(key)) == NULL)
+    if((np = lookup(key, table)) == NULL)
     {
-      return NULL;
-    }
+        /* not found */
+        np = malloc(sizeof(np));
     
-    hashval = hash(key);
-    np->next = &table[hashval];
-    table[hashval] = *np;
-  }
-  else
-  {
-    free((void*)np->value);
-  }
+        if(np == NULL || (np->key = strdup(key)) == NULL)
+        {
+            return NULL;
+        }
+    
+        hashval = hash(key);
+        np->next = &table[hashval];
+        table[hashval] = *np;
+    }
+    else
+    {
+        free((void*)np->value);
+    }
   
-  if((np->value = strdup(value)) == NULL)
-  {
-    return NULL;
-  }
+    if((np->value = strdup(value)) == NULL)
+    {
+        return NULL;
+    }
   
-  return np;
+    return np;
 }

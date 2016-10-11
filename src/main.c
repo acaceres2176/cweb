@@ -20,141 +20,134 @@
 
 int main(void)
 {
-  int status = 0;
-  int sock, new_sock = 0;
-  struct addrinfo hints;
-  struct addrinfo *servinfo;
+    int status = 0;
+    int sock, new_sock = 0;
+    struct addrinfo hints;
+    struct addrinfo *servinfo;
+    
+    /* populate request header */
+    HTTP_Request_Header http_header;
+    http_header.method = 0;
+    http_header.uri = "";
+    http_header.major_version = 0;
+    http_header.minor_version = 0;
   
-  HTTP_Request_Header http_header;
-  http_header.method = 0;
-  http_header.uri = "";
-  http_header.major_version = 0;
-  http_header.minor_version = 0;
+    char* errmsg = malloc(DEFAULT_ERRMSG_LEN * sizeof(char));
   
-  char* errmsg = malloc(DEFAULT_ERRMSG_LEN * sizeof(char));
-  
-  struct sockaddr_storage their_addr;
-  socklen_t addr_size;
+    struct sockaddr_storage their_addr;
+    socklen_t addr_size;
 
-  memset(&hints, 0, sizeof hints);
-  hints.ai_family = AF_UNSPEC; // IPv4 or IPv6
-  hints.ai_socktype = SOCK_STREAM; // TCP
-  hints.ai_flags = AI_PASSIVE; // automatically find IP
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;
   
-  status = getaddrinfo(NULL, DEFAULT_PORT, &hints, &servinfo);
+    status = getaddrinfo(NULL, DEFAULT_PORT, &hints, &servinfo);
   
-  if(status != 0) 
-  {
-    sprintf(errmsg, "[ERROR] Failed to receive on socket. System said: %s\n", strerror(errno));
-    fprintf(stderr, errmsg);
-    log_msg(errmsg);
+    if(status != 0) 
+    {
+        sprintf(errmsg, "[ERROR] Failed to receive on socket. System said: %s\n", strerror(errno));
+        fprintf(stderr, errmsg);
+        log_msg(errmsg);
       
-    return EXIT_FAILURE;
-  }
-  // servinfo now points to a linked list of 1 or more struct addrinfos
-  // ... do everything until you don't need servinfo anymore ....
-  
-  sock = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol);
-  
-  if(sock == -1)
-  {
-    sprintf(errmsg, "[ERROR] Failed to receive on socket. System said: %s\n", strerror(errno));
-    fprintf(stderr, errmsg);
-    log_msg(errmsg);
+        return EXIT_FAILURE;
+    }
     
-    close(sock);
-    freeaddrinfo(servinfo);
-    
-    return EXIT_FAILURE;
-  }
+    sock = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol);
   
-  status = bind(sock, servinfo->ai_addr, servinfo->ai_addrlen);
+    if(sock == -1)
+    {
+        sprintf(errmsg, "[ERROR] Failed to receive on socket. System said: %s\n", strerror(errno));
+        fprintf(stderr, errmsg);
+        log_msg(errmsg);
+    
+        close(sock);
+        freeaddrinfo(servinfo);
+    
+        return EXIT_FAILURE;
+    }
+  
+    status = bind(sock, servinfo->ai_addr, servinfo->ai_addrlen);
 
-  // error handling
-  if(status == -1)
-  {
-    sprintf(errmsg, "[ERROR] Failed to receive on socket. System said: %s\n", strerror(errno));
-    fprintf(stderr, errmsg);
-    log_msg(errmsg);
-      
-    close(sock);
-    freeaddrinfo(servinfo);
-        
-    return EXIT_FAILURE;
-  }
-  
-  printf("Waiting for requests over the wire...\n");
-  log_msg("Waiting...");
-  
-  char* recvbuf = malloc(DEFAULT_BUF_LEN * sizeof(char));
-  char* response = malloc(DEFAULT_BUF_LEN * sizeof(char));
-  
-  int alive = 1;
-  
-  while(alive == 1)
-  {
-    status = listen(sock, DEFAULT_BACKLOG);
-  
-  // error handling
-  if(status == -1)
-  {
-    sprintf(errmsg, "[ERROR] Failed to receive on socket. System said: %s\n", strerror(errno));
-    fprintf(stderr, errmsg);
-    log_msg(errmsg);
-      
-    close(sock);
-    freeaddrinfo(servinfo);
-    
-    return EXIT_FAILURE;
-  }
-    
-    addr_size = sizeof their_addr;
-    new_sock = accept(sock, (struct sockaddr *)&their_addr, &addr_size);
-    
-    status = recv(new_sock, recvbuf, DEFAULT_BUF_LEN, 0);
-  
+    /* error handling */
     if(status == -1)
     {
-      sprintf(errmsg, "[ERROR] Failed to receive on socket. System said: %s\n", strerror(errno));
-      fprintf(stderr, errmsg);
-      log_msg(errmsg);
+        sprintf(errmsg, "[ERROR] Failed to receive on socket. System said: %s\n", strerror(errno));
+        fprintf(stderr, errmsg);
+        log_msg(errmsg);
       
-      free(response);
-      free(recvbuf);
-      close(new_sock);
-      close(sock);
-      freeaddrinfo(servinfo);
-    
-      return EXIT_FAILURE;
+        close(sock);
+        freeaddrinfo(servinfo);
+        
+        return EXIT_FAILURE;
     }
   
-    //printf("%s", recvbuf);
+    printf("Waiting for requests over the wire...\n");
+    log_msg("Waiting...");
   
-    status = parse(recvbuf, DEFAULT_BUF_LEN, &http_header);
-    
-    if(status == EXIT_FAILURE)
+    char* recvbuf = malloc(DEFAULT_BUF_LEN * sizeof(char));
+    char* response = malloc(DEFAULT_BUF_LEN * sizeof(char));
+  
+    int alive = 1;
+  
+    while(alive == 1)
     {
-      // respond with HTTP 400
-      //respond(&http_header, response);
-      alive = 0;
-    }
-    else
-    {
-      respond(&http_header, response);
-      //alive = 0;
-      //send(new_sock, DEFAULT_RESPONSE, strlen(DEFAULT_RESPONSE), 0);
-    }
+        status = listen(sock, DEFAULT_BACKLOG);
+  
+        /* error handling */
+        if(status == -1)
+        {
+            sprintf(errmsg, "[ERROR] Failed to receive on socket. System said: %s\n", strerror(errno));
+            fprintf(stderr, errmsg);
+            log_msg(errmsg);
+      
+            close(sock);
+            freeaddrinfo(servinfo);
     
-    send(new_sock, response, DEFAULT_BUF_LEN, 0);
+            return EXIT_FAILURE;
+        }
+    
+        addr_size = sizeof their_addr;
+        new_sock = accept(sock, (struct sockaddr *)&their_addr, &addr_size);
+    
+        status = recv(new_sock, recvbuf, DEFAULT_BUF_LEN, 0);
+  
+        if(status == -1)
+        {
+            sprintf(errmsg, "[ERROR] Failed to receive on socket. System said: %s\n", strerror(errno));
+            fprintf(stderr, errmsg);
+            log_msg(errmsg);
+      
+            free(response);
+            free(recvbuf);
+            close(new_sock);
+            close(sock);
+            freeaddrinfo(servinfo);
+    
+            return EXIT_FAILURE;
+        }
+  
+        status = parse(recvbuf, DEFAULT_BUF_LEN, &http_header);
+    
+        if(status == EXIT_FAILURE)
+        {
+            alive = 0;
+        }
+        else
+        {
+            respond(&http_header, response);
+        }
+    
+        send(new_sock, response, DEFAULT_BUF_LEN, 0);
+        close(new_sock);
+    }
+  
+    free(errmsg);
+    free(response);
+    free(recvbuf);
     close(new_sock);
-  }
-  
-  free(errmsg);
-  free(response);
-  free(recvbuf);
-  close(new_sock);
-  close(sock);
-  freeaddrinfo(servinfo); // free the linked-list  
+    close(sock);
+    freeaddrinfo(servinfo);  
 
-  return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }
