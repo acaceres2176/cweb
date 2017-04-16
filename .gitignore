@@ -35,5 +35,4 @@
 *.pub
 *.tmp
 
-bin/*
 *.log

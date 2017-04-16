@@ -4,7 +4,7 @@
 #include "logging.h"
 #include "hash.h"
 
-int num_bytes_until(char* str, char* needle, int len)
+int num_bytes_until(char* str, int len)
 {
     int i = 0;
     int bytes = 0;
@@ -53,8 +53,8 @@ int parse(char* request, int len, HTTP_Request_Header* http_header)
 
     if(header == NULL)
     {
-        sprintf("[ERROR] Failed to allocate sufficient memory. System "\
-                "said: %s", strerror(errno));
+        sprintf(errmsg, "[ERROR] Failed to allocate sufficient memory. System"\
+                " said: %s", strerror(errno));
         fprintf(stderr, "%s\n", errmsg);
         log_msg(errmsg);
     }
@@ -83,10 +83,10 @@ int parse(char* request, int len, HTTP_Request_Header* http_header)
 
     if(lines == NULL)
     {
-    sprintf("[ERROR] Failed to allocate sufficient memory. System said: %s", 
-            strerror(errno));
-    fprintf(stderr, "%s\n", errmsg);
-    log_msg(errmsg);
+        sprintf(errmsg, "[ERROR] Failed to allocate sufficient memory."\
+                "System said: %s", strerror(errno));
+        fprintf(stderr, "%s\n", errmsg);
+        log_msg(errmsg);
     }
 
     line = strtok(header, "\r\n"); // get the first line from the header
@@ -98,8 +98,8 @@ int parse(char* request, int len, HTTP_Request_Header* http_header)
   
         if(lines[i] == NULL)
         {
-            sprintf("[ERROR] Failed to allocate sufficient memory. System "\
-                    "said: %s", strerror(errno));
+            sprintf(errmsg, "[ERROR] Failed to allocate sufficient memory."\
+                    "System said: %s", strerror(errno));
             fprintf(stderr, "%s\n", errmsg);
             log_msg(errmsg);
         }
@@ -235,7 +235,7 @@ int respond(HTTP_Request_Header* http_header, char* response)
     
         sprintf(response, "HTTP/%s %d %s\r\nServer: CWeb/%s (Unix)\r\n"\
                             "Content-Type: text/html; charset=utf-8\r\n"\
-                            "Content-Length: %d\r\n\r\n%s", HTTP_VERSION_NUM,
+                            "Content-Length: %zu\r\n\r\n%s", HTTP_VERSION_NUM,
                             200, HTTP_200_NAME, CWEB_VERSION, file_size, 
                             file_contents);
     

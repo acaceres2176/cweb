@@ -47,7 +47,7 @@ int main(void)
     if(status != 0) 
     {
         sprintf(errmsg, "[ERROR] Failed to receive on socket. System said: %s\n", strerror(errno));
-        fprintf(stderr, errmsg);
+        fprintf(stderr, "%s", errmsg);
         log_msg(errmsg);
       
         return EXIT_FAILURE;
@@ -58,7 +58,7 @@ int main(void)
     if(sock == -1)
     {
         sprintf(errmsg, "[ERROR] Failed to receive on socket. System said: %s\n", strerror(errno));
-        fprintf(stderr, errmsg);
+        fprintf(stderr, "%s", errmsg);
         log_msg(errmsg);
     
         close(sock);
@@ -73,7 +73,7 @@ int main(void)
     if(status == -1)
     {
         sprintf(errmsg, "[ERROR] Failed to receive on socket. System said: %s\n", strerror(errno));
-        fprintf(stderr, errmsg);
+        fprintf(stderr, "%s", errmsg);
         log_msg(errmsg);
       
         close(sock);
@@ -82,7 +82,7 @@ int main(void)
         return EXIT_FAILURE;
     }
   
-    printf("Waiting for requests over the wire...\n");
+    printf("[INFO] Waiting for requests over the wire...\n");
     log_msg("Waiting...");
   
     char* recvbuf = malloc(DEFAULT_BUF_LEN * sizeof(char));
@@ -98,7 +98,7 @@ int main(void)
         if(status == -1)
         {
             sprintf(errmsg, "[ERROR] Failed to receive on socket. System said: %s\n", strerror(errno));
-            fprintf(stderr, errmsg);
+            fprintf(stderr, "%s", errmsg);
             log_msg(errmsg);
       
             close(sock);
@@ -115,7 +115,7 @@ int main(void)
         if(status == -1)
         {
             sprintf(errmsg, "[ERROR] Failed to receive on socket. System said: %s\n", strerror(errno));
-            fprintf(stderr, errmsg);
+            fprintf(stderr, "%s", errmsg);
             log_msg(errmsg);
       
             free(response);
